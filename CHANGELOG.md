@@ -1,5 +1,35 @@
 # @interop/social-core Changelog
 
+## 0.4.0 - TBD
+
+### Changed
+
+- **BREAKING**: `planImportMerge` now returns a fourth bucket, `stale`: the
+  existing source-imported rows (`nativeId` non-null) that the batch neither
+  matched by `nativeId` nor claimed by content -- orphans whose source id
+  vanished, wallet-edited ones included. It is advisory: the planner still never
+  deletes anything, so a caller decides whether to offer cleanup, re-link, or
+  ignore them. Wallet-only rows (null `nativeId`) are never stale. Callers that
+  exhaustively destructure or type the return value need updating.
+- `planImportMerge` falls back to a content match when an incoming contact's
+  `nativeId` matches no row, so a contact whose source id churned -- notably
+  Android's aggregate contact id, which changes when the OS re-links raw
+  contacts across accounts -- rebinds to its existing row instead of duplicating
+  it. Only rows holding a `nativeId` that no contact in the batch claims are
+  candidates, and each row can be claimed by at most one incoming contact (first
+  match wins, in incoming order). A shared DID matches on its own, even when the
+  display names differ. Otherwise a candidate matches when the normalized
+  display names are equal and non-empty AND the two share at least one
+  normalized phone or email -- or, when both sides have no phones, emails, or
+  DIDs at all, on the name alone. Phones compare by `digits` when present, else
+  by the digits of `number`; emails compare trimmed and lowercased; names
+  compare NFKC-normalized, lowercased, and whitespace-collapsed; DIDs are taken
+  from `urlAddresses` via `getDids` and compared verbatim. A matched row that
+  was never wallet-edited is overwritten, which rebinds it to the new
+  `nativeId`; a wallet-edited one is skipped, keeping the invariant that a
+  wallet edit is never overwritten by an import while still not duplicating the
+  row. Contacts and rows with a null/undefined `nativeId` never participate.
+
 ## 0.3.0 - 2026-07-30
 
 ### Changed
