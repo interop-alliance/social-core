@@ -1,5 +1,17 @@
 # @interop/social-core Changelog
 
+## 0.5.0 - TBD
+
+### Changed
+
+- `ContactData.phoneNumbers` and `ContactData.emailAddresses` are now optional,
+  like every other multi-entry field: a contact reachable only by DID has
+  neither, and should not have to carry an empty array to say so.
+  `isContactData` accepts them absent (still rejecting a present-but-malformed
+  array), and `normalizeContact` is unchanged -- it keeps emitting `[]` for
+  both, so its output stays byte-identical. Consumers that read either field
+  without a `?? []` guard need updating.
+
 ## 0.4.0 - 2026-07-30
 
 ### Changed

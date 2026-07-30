@@ -47,6 +47,15 @@ describe('isContactData', () => {
     ).toBe(true)
   })
 
+  it('accepts a contact with no phoneNumbers / emailAddresses at all', () => {
+    expect(
+      isContactData({
+        displayName: 'Interop Alliance Team',
+        urlAddresses: [{ label: 'did', url: 'did:web:interopalliance.org' }]
+      })
+    ).toBe(true)
+  })
+
   it('accepts a null nativeId (wallet-created)', () => {
     expect(isContactData({ ...validContact, nativeId: null })).toBe(true)
   })

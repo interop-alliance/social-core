@@ -87,8 +87,9 @@ function isBirthday(x: unknown): boolean {
 /**
  * Structural guard for {@link ContactData}. Guards the moment one replica
  * decrypts a `contacts` envelope written by the other implementation: required
- * `displayName` string, well-formed `phoneNumbers` / `emailAddresses` arrays,
- * and optional fields either absent or of the right type.
+ * `displayName` string, and optional fields either absent or of the right type
+ * (`phoneNumbers` / `emailAddresses` included -- a DID-only contact carries
+ * neither).
  *
  * The guard checks the fields it knows and ignores any others, so a document
  * stored under the earlier postal-address spellings (`postCode`, `pobox`, and
@@ -102,8 +103,8 @@ export function isContactData(x: unknown): x is ContactData {
   }
   return (
     typeof x.displayName === 'string' &&
-    isArrayOf(x.phoneNumbers, isLabeledNumber) &&
-    isArrayOf(x.emailAddresses, isLabeledEmail) &&
+    isOptional(x.phoneNumbers, v => isArrayOf(v, isLabeledNumber)) &&
+    isOptional(x.emailAddresses, v => isArrayOf(v, isLabeledEmail)) &&
     isOptional(x.nativeId, v => typeof v === 'string') &&
     isOptionalString(x.givenName) &&
     isOptionalString(x.middleName) &&

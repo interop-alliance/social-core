@@ -35,7 +35,11 @@ export type ContactData = {
   // contact-level `nativeId`, it is a diff hint rather than permanent
   // identity -- on Android sub-record ids can churn when the OS re-aggregates
   // raw contacts across accounts.
-  phoneNumbers: {
+  // Optional like every other multi-entry field: a contact reachable only by
+  // DID has neither a phone nor an email, and should not have to carry an
+  // empty array to say so. `normalizeContact` still emits `[]` for both, so
+  // its output stays byte-identical to earlier versions.
+  phoneNumbers?: {
     label: string
     number: string
     digits?: string
@@ -44,7 +48,7 @@ export type ContactData = {
   }[]
   // `id` carries the same caveat as on `phoneNumbers`: a diff hint, not
   // permanent identity.
-  emailAddresses: { label: string; email: string; id?: string }[]
+  emailAddresses?: { label: string; email: string; id?: string }[]
   // The administrative subdivision is carried as `region` only (import sources
   // spell it `region` or `state` depending on platform; the mapping to
   // `region` is the importer's job).

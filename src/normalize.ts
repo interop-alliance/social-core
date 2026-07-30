@@ -104,10 +104,13 @@ function isPositive(value: number | null | undefined): value is number {
  * Phone / email entries whose number / address is empty after trimming are
  * dropped first, so they never count toward "has a contact method".
  *
- * Optional array fields (`postalAddresses`, `imAddresses`, `urlAddresses`) are
- * omitted entirely when empty after normalization -- only `phoneNumbers` /
- * `emailAddresses` stay required with an `[]` default -- so a contact without
- * them serializes byte-identically to the pre-expansion shape.
+ * The other array fields (`postalAddresses`, `imAddresses`, `urlAddresses`) are
+ * omitted entirely when empty after normalization, while `phoneNumbers` /
+ * `emailAddresses` are always emitted with an `[]` default -- so a contact
+ * without them serializes byte-identically to the pre-expansion shape. They are
+ * optional on `ContactData` (a hand-authored or DID-only contact may omit
+ * them); that only relaxes what a producer must supply, not what this function
+ * writes.
  */
 export function normalizeContact(input: ContactInput): ContactData | null {
   const givenName = (input.givenName ?? '').trim()
