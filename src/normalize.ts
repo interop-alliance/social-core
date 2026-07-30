@@ -23,24 +23,53 @@ export type ContactInput = {
   organization?: string | null
   jobTitle?: string | null
   department?: string | null
-  phoneNumbers?: { label?: string | null; number: string }[] | null
-  emailAddresses?: { label?: string | null; email: string }[] | null
+  /**
+   * An entry whose `number` is empty after trimming carries nothing and is
+   * dropped (before the "is there any contact method?" keep/drop decision), so
+   * a source that hands back placeholder entries cannot resurrect a contact
+   * that has no name and no reachable number. `id`, when the source provides
+   * one, identifies the entry within the source contact -- a diff hint rather
+   * than permanent identity, since on Android sub-record ids can churn when
+   * the OS re-aggregates raw contacts across accounts.
+   */
+  phoneNumbers?:
+    | {
+        label?: string | null
+        number?: string | null
+        digits?: string | null
+        countryCode?: string | null
+        id?: string | null
+      }[]
+    | null
+  /**
+   * An entry whose `email` is empty after trimming is dropped, on the same
+   * terms as `phoneNumbers`; `id` carries the same diff-hint-only caveat.
+   */
+  emailAddresses?:
+    | { label?: string | null; email?: string | null; id?: string | null }[]
+    | null
   postalAddresses?:
     | {
         label?: string | null
         formattedAddress?: string | null
         street?: string | null
-        pobox?: string | null
+        poBox?: string | null
         neighborhood?: string | null
         city?: string | null
         region?: string | null
-        state?: string | null
-        postCode?: string | null
+        postalCode?: string | null
         country?: string | null
       }[]
     | null
   imAddresses?: { service?: string | null; username?: string | null }[] | null
   urlAddresses?: { label?: string | null; url?: string | null }[] | null
+  /**
+   * `month` is 1-INDEXED (1 = January), matching how address books present a
+   * birthday; `normalizeContact` requires `month > 0`. An importer whose
+   * source uses the 0-indexed JS `Date` convention MUST add 1 before calling:
+   * passing a raw 0-indexed month would silently drop every January birthday
+   * and shift all the others back by one.
+   */
   birthday?: {
     day?: number | null
     month?: number | null
@@ -72,6 +101,9 @@ function isPositive(value: number | null | undefined): value is number {
  * Photos are never carried: thumbnails would bloat the encrypted sync
  * envelopes, so a wallet renders initials avatars instead.
  *
+ * Phone / email entries whose number / address is empty after trimming are
+ * dropped first, so they never count toward "has a contact method".
+ *
  * Optional array fields (`postalAddresses`, `imAddresses`, `urlAddresses`) are
  * omitted entirely when empty after normalization -- only `phoneNumbers` /
  * `emailAddresses` stay required with an `[]` default -- so a contact without
@@ -83,14 +115,25 @@ export function normalizeContact(input: ContactInput): ContactData | null {
   const displayName =
     (input.displayName ?? '').trim() || `${givenName} ${familyName}`.trim()
 
-  const phoneNumbers = (input.phoneNumbers ?? []).map(p => ({
-    label: normalizeLabel(p.label),
-    number: p.number
-  }))
-  const emailAddresses = (input.emailAddresses ?? []).map(e => ({
-    label: normalizeLabel(e.label),
-    email: e.email
-  }))
+  // A phone / email entry with no number / address (after trim) carries
+  // nothing: drop it BEFORE deciding whether the contact has any contact
+  // method at all, so placeholder entries cannot keep a nameless contact.
+  const phoneNumbers = (input.phoneNumbers ?? [])
+    .map(p => ({
+      label: normalizeLabel(p.label),
+      number: (p.number ?? '').trim(),
+      digits: trimmed(p.digits),
+      countryCode: trimmed(p.countryCode),
+      id: trimmed(p.id)
+    }))
+    .filter(p => p.number !== '')
+  const emailAddresses = (input.emailAddresses ?? [])
+    .map(e => ({
+      label: normalizeLabel(e.label),
+      email: (e.email ?? '').trim(),
+      id: trimmed(e.id)
+    }))
+    .filter(e => e.email !== '')
 
   const hasContactMethod = phoneNumbers.length > 0 || emailAddresses.length > 0
   if (displayName === '' && !hasContactMethod) {
@@ -117,12 +160,11 @@ export function normalizeContact(input: ContactInput): ContactData | null {
     label: normalizeLabel(a.label),
     formattedAddress: trimmed(a.formattedAddress),
     street: trimmed(a.street),
-    pobox: trimmed(a.pobox),
+    poBox: trimmed(a.poBox),
     neighborhood: trimmed(a.neighborhood),
     city: trimmed(a.city),
     region: trimmed(a.region),
-    state: trimmed(a.state),
-    postCode: trimmed(a.postCode),
+    postalCode: trimmed(a.postalCode),
     country: trimmed(a.country)
   }))
   if (postalAddresses.length > 0) {

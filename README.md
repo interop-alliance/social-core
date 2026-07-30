@@ -103,16 +103,27 @@ const { inserts, overwrites, skips } = planImportMerge(existingRows, incoming)
 // must keep the row's `updatedAt === createdAt` so it stays import-refreshable.
 ```
 
+Upgrade a stored contact to the current shape when you load it:
+
+```ts
+import { upgradeContactData } from '@interop/social-core'
+
+const contact = upgradeContactData(headPayload.contact)
+// Idempotent: a contact already in the current shape is returned unchanged,
+// so it is safe to apply on every load.
+```
+
 ## Modules
 
-| Module      | Exports                                                                        | Purpose                                                                   |
-| ----------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `types`     | `ContactData`, `ContactAction`, `ContactHeadPayload`, `ContactRevisionPayload` | The shared contact shape and the decrypted sync-envelope payload shapes.  |
-| `constants` | `CONTACTS_COLLECTION`, `CONTACTS_HISTORY_COLLECTION`, and their specs          | The wire-format collection ids and id-derivation both replicas agree on.  |
-| `lww`       | `remotePayloadWins`                                                            | The last-write-wins tiebreak for a mutable head document.                 |
-| `normalize` | `normalizeLabel`, `normalizeContact`, `ContactInput`                           | Pure normalization of a source-mapped partial contact into `ContactData`. |
-| `merge`     | `planImportMerge`                                                              | The pure insert / overwrite / skip planner for a re-runnable import.      |
-| `validate`  | `isContactData`, `isContactHeadPayload`, `isContactRevisionPayload`            | Runtime guards for a payload one replica decrypts from the other.         |
+| Module      | Exports                                                                            | Purpose                                                                   |
+| ----------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `types`     | `ContactData`, `ContactAction`, `ContactHeadPayload`, `ContactRevisionPayload`     | The shared contact shape and the decrypted sync-envelope payload shapes.  |
+| `constants` | `CONTACTS_COLLECTION`, `CONTACTS_HISTORY_COLLECTION`, and their specs              | The wire-format collection ids and id-derivation both replicas agree on.  |
+| `lww`       | `remotePayloadWins`                                                                | The last-write-wins tiebreak for a mutable head document.                 |
+| `normalize` | `normalizeLabel`, `normalizeContact`, `ContactInput`                               | Pure normalization of a source-mapped partial contact into `ContactData`. |
+| `merge`     | `planImportMerge`                                                                  | The pure insert / overwrite / skip planner for a re-runnable import.      |
+| `validate`  | `isContactData`, `isContactHeadPayload`, `isContactRevisionPayload`                | Runtime guards for a payload one replica decrypts from the other.         |
+| `upgrade`   | `upgradeContactData`, `upgradeContactHeadPayload`, `upgradeContactRevisionPayload` | Read-path upgrade of a stored contact to the current shape.               |
 
 ## Contribute
 

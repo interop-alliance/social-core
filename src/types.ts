@@ -8,12 +8,13 @@
  * place, so the stored/synced format never depends on the import source.
  *
  * Covers every semantic field of a phone address-book contact. Deliberately
- * NOT carried from the native shape:
- *   - `recordID` -- already carried as `nativeId`.
- *   - `backTitle` -- an iOS navigation-display artifact, not contact data.
- *   - `hasThumbnail` / `thumbnailPath` -- a device-local file path; photos are
- *     deliberately never carried (they would bloat the encrypted sync
- *     envelopes; wallets render initials avatars).
+ * NOT carried from an import source's shape:
+ *   - the source's own record identifier -- already carried as `nativeId`.
+ *   - display/navigation artifacts of a particular contacts UI (sort keys,
+ *     back-navigation titles), which are not contact data.
+ *   - photos and their device-local file paths -- deliberately never carried
+ *     (they would bloat the encrypted sync envelopes; wallets render initials
+ *     avatars).
  */
 export type ContactData = {
   // id in the import source (phone address book, etc.), used for re-import
@@ -29,20 +30,33 @@ export type ContactData = {
   organization?: string
   jobTitle?: string
   department?: string
-  phoneNumbers: { label: string; number: string }[]
-  emailAddresses: { label: string; email: string }[]
-  // both `region` and `state` are kept (Android vs iOS populate different
-  // ones), so the shape stays lossless across platforms
+  // `digits` / `countryCode` are carried when the import source provides them.
+  // `id` identifies the entry within the source contact; like the
+  // contact-level `nativeId`, it is a diff hint rather than permanent
+  // identity -- on Android sub-record ids can churn when the OS re-aggregates
+  // raw contacts across accounts.
+  phoneNumbers: {
+    label: string
+    number: string
+    digits?: string
+    countryCode?: string
+    id?: string
+  }[]
+  // `id` carries the same caveat as on `phoneNumbers`: a diff hint, not
+  // permanent identity.
+  emailAddresses: { label: string; email: string; id?: string }[]
+  // The administrative subdivision is carried as `region` only (import sources
+  // spell it `region` or `state` depending on platform; the mapping to
+  // `region` is the importer's job).
   postalAddresses?: {
     label: string
     formattedAddress?: string
     street?: string
-    pobox?: string
+    poBox?: string
     neighborhood?: string
     city?: string
     region?: string
-    state?: string
-    postCode?: string
+    postalCode?: string
     country?: string
   }[]
   imAddresses?: { service: string; username: string }[]

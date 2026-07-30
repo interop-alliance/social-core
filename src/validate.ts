@@ -24,20 +24,28 @@ function isArrayOf(x: unknown, check: (v: unknown) => boolean): boolean {
   return Array.isArray(x) && x.every(check)
 }
 
+function isOptionalString(x: unknown): boolean {
+  return isOptional(x, v => typeof v === 'string')
+}
+
 function isLabeledNumber(x: unknown): boolean {
   return (
-    isRecord(x) && typeof x.label === 'string' && typeof x.number === 'string'
+    isRecord(x) &&
+    typeof x.label === 'string' &&
+    typeof x.number === 'string' &&
+    isOptionalString(x.digits) &&
+    isOptionalString(x.countryCode) &&
+    isOptionalString(x.id)
   )
 }
 
 function isLabeledEmail(x: unknown): boolean {
   return (
-    isRecord(x) && typeof x.label === 'string' && typeof x.email === 'string'
+    isRecord(x) &&
+    typeof x.label === 'string' &&
+    typeof x.email === 'string' &&
+    isOptionalString(x.id)
   )
-}
-
-function isOptionalString(x: unknown): boolean {
-  return isOptional(x, v => typeof v === 'string')
 }
 
 function isPostalAddress(x: unknown): boolean {
@@ -46,12 +54,11 @@ function isPostalAddress(x: unknown): boolean {
     typeof x.label === 'string' &&
     isOptionalString(x.formattedAddress) &&
     isOptionalString(x.street) &&
-    isOptionalString(x.pobox) &&
+    isOptionalString(x.poBox) &&
     isOptionalString(x.neighborhood) &&
     isOptionalString(x.city) &&
     isOptionalString(x.region) &&
-    isOptionalString(x.state) &&
-    isOptionalString(x.postCode) &&
+    isOptionalString(x.postalCode) &&
     isOptionalString(x.country)
   )
 }
@@ -82,6 +89,12 @@ function isBirthday(x: unknown): boolean {
  * decrypts a `contacts` envelope written by the other implementation: required
  * `displayName` string, well-formed `phoneNumbers` / `emailAddresses` arrays,
  * and optional fields either absent or of the right type.
+ *
+ * The guard checks the fields it knows and ignores any others, so a document
+ * stored under the earlier postal-address spellings (`postCode`, `pobox`, and
+ * the separate `state`) still validates: decrypt, validate, then
+ * `upgradeContactData` -- in either order, since validation tolerates both
+ * shapes.
  */
 export function isContactData(x: unknown): x is ContactData {
   if (!isRecord(x)) {

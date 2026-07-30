@@ -1,5 +1,50 @@
 # @interop/social-core Changelog
 
+## 0.3.0 - TBD
+
+### Changed
+
+- **BREAKING**: postal addresses in `ContactData` / `ContactInput` now spell the
+  postal code `postalCode` (was `postCode`) and the post-office box `poBox` (was
+  `pobox`).
+- **BREAKING**: the administrative subdivision is carried as `region` only; the
+  parallel `state` field is gone. Mapping a source that reports a `state` onto
+  `region` is the importer's job, keeping exactly one spelling per field in
+  `ContactInput`. Documents stored under the old shape upgrade via
+  `upgradeContactData` (see below).
+- `phoneNumbers` entries can now carry `digits`, `countryCode`, and an `id`;
+  `emailAddresses` entries can carry an `id`. All are optional, so an importer
+  that has none of them produces the same output as before. Note the caveat
+  documented on the fields: like the contact-level `nativeId`, a sub-record `id`
+  can churn when a platform re-aggregates raw contacts across accounts, so treat
+  it as a diff hint rather than permanent identity.
+- `ContactInput` phone / email entries now take an optional, nullable `number` /
+  `email`, so an importer can pass a source's entries straight through without
+  pre-filtering. `normalizeContact` trims them and DROPS entries that are empty
+  afterwards -- and it now does so before deciding whether the contact has any
+  contact method at all, so a placeholder entry can no longer keep a nameless
+  contact that has nothing to reach it by. Callers that relied on empty entries
+  surviving normalization will see shorter arrays.
+- `isContactData` checks the new field spellings and the new optional sub-record
+  fields. It ignores fields it does not know, so a document stored under the old
+  spellings still validates: decrypt, validate, and upgrade in whichever order
+  suits the consumer.
+- Documented `ContactInput.birthday.month` as 1-indexed (1 = January) at the
+  contract boundary. `normalizeContact` requires `month > 0`, so an importer
+  whose source uses the 0-indexed JS `Date` convention must add 1 before
+  calling; passing a raw 0-indexed month silently drops every January birthday
+  and shifts the rest back by one.
+
+### Added
+
+- `upgradeContactData`, plus the `upgradeContactHeadPayload` /
+  `upgradeContactRevisionPayload` conveniences, for the read path: renames
+  `postCode` / `pobox` and folds `state` into `region` when `region` is absent.
+  Apply it when loading stored head / revision documents so pre-change documents
+  compare cleanly against a fresh import and last-write-wins sees no spurious
+  edit. Input already in the current shape is returned unchanged, so it is
+  idempotent and safe to apply on every load.
+
 ## 0.2.0 - 2026-07-30
 
 ### Added
