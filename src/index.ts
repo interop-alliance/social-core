@@ -19,6 +19,11 @@ export { normalizeLabel, normalizeContact } from './normalize.js'
 export type { ContactInput } from './normalize.js'
 export { planImportMerge } from './merge.js'
 export {
+  upgradeContactData,
+  upgradeContactHeadPayload,
+  upgradeContactRevisionPayload
+} from './upgrade.js'
+export {
   isContactData,
   isContactHeadPayload,
   isContactRevisionPayload

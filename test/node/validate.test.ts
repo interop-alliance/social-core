@@ -108,7 +108,7 @@ describe('isContactData', () => {
             street: '1 Engine Way',
             city: 'London',
             region: 'Greater London',
-            postCode: 'N1',
+            postalCode: 'N1',
             country: 'UK'
           }
         ],
@@ -156,6 +156,59 @@ describe('isContactData', () => {
       })
     ).toBe(false)
     expect(isContactData({ ...validContact, imAddresses: 'nope' })).toBe(false)
+  })
+
+  it('accepts the richer phone/email sub-record fields', () => {
+    expect(
+      isContactData({
+        ...validContact,
+        phoneNumbers: [
+          {
+            label: 'mobile',
+            number: '555-0100',
+            digits: '5550100',
+            countryCode: 'us',
+            id: 'phone-1'
+          }
+        ],
+        emailAddresses: [
+          { label: 'work', email: 'ada@example.com', id: 'email-1' }
+        ]
+      })
+    ).toBe(true)
+  })
+
+  it('rejects wrong-typed phone/email sub-record fields', () => {
+    expect(
+      isContactData({
+        ...validContact,
+        phoneNumbers: [{ label: 'mobile', number: '555-0100', digits: 5 }]
+      })
+    ).toBe(false)
+    expect(
+      isContactData({
+        ...validContact,
+        emailAddresses: [{ label: 'work', email: 'a@b.io', id: 7 }]
+      })
+    ).toBe(false)
+  })
+
+  it('still accepts a document stored under the legacy postal spellings', () => {
+    // Consumers decrypt, validate, then upgrade; the guard must not reject a
+    // pre-upgrade document.
+    expect(
+      isContactData({
+        ...validContact,
+        postalAddresses: [
+          {
+            label: 'home',
+            pobox: 'PO Box 1',
+            state: 'NY',
+            postCode: '10001'
+          }
+        ]
+      })
+    ).toBe(true)
   })
 
   it('rejects a malformed birthday (missing or non-numeric day/month)', () => {

@@ -147,8 +147,7 @@ describe('normalizeContact', () => {
           street: '1 Engine Way',
           city: 'London',
           region: ' Greater London ',
-          state: '',
-          postCode: 'N1',
+          postalCode: 'N1',
           country: 'UK'
         }
       ],
@@ -170,7 +169,7 @@ describe('normalizeContact', () => {
           street: '1 Engine Way',
           city: 'London',
           region: 'Greater London',
-          postCode: 'N1',
+          postalCode: 'N1',
           country: 'UK'
         }
       ],
@@ -180,8 +179,8 @@ describe('normalizeContact', () => {
       isStarred: true
     })
     // Empty postal subfields are omitted, not stored as ''.
-    expect(data?.postalAddresses?.[0]?.state).toBeUndefined()
-    expect(data?.postalAddresses?.[0]?.pobox).toBeUndefined()
+    expect(data?.postalAddresses?.[0]?.poBox).toBeUndefined()
+    expect(data?.postalAddresses?.[0]?.neighborhood).toBeUndefined()
   })
 
   it('omits the new array fields entirely when empty or absent', () => {
@@ -259,6 +258,96 @@ describe('normalizeContact', () => {
       birthday: { day: NaN, month: 6 }
     })
     expect(nonFinite?.birthday).toBeUndefined()
+  })
+
+  it('carries the richer phone/email sub-record fields, trimmed', () => {
+    const data = normalizeContact({
+      givenName: 'Rich',
+      phoneNumbers: [
+        {
+          label: 'MOBILE',
+          number: ' +1 555-0100 ',
+          digits: ' 15550100 ',
+          countryCode: ' us ',
+          id: ' phone-entry-1 '
+        }
+      ],
+      emailAddresses: [
+        { label: 'work', email: ' rich@example.com ', id: ' email-entry-1 ' }
+      ]
+    })
+    expect(data?.phoneNumbers).toEqual([
+      {
+        label: 'mobile',
+        number: '+1 555-0100',
+        digits: '15550100',
+        countryCode: 'us',
+        id: 'phone-entry-1'
+      }
+    ])
+    expect(data?.emailAddresses).toEqual([
+      { label: 'work', email: 'rich@example.com', id: 'email-entry-1' }
+    ])
+  })
+
+  it('omits empty optional sub-record fields rather than storing ""', () => {
+    const data = normalizeContact({
+      givenName: 'Sparse',
+      phoneNumbers: [
+        { label: 'home', number: '555-0100', digits: '  ', countryCode: null }
+      ],
+      emailAddresses: [{ label: 'home', email: 'a@b.io', id: '' }]
+    })
+    const serialized = JSON.parse(JSON.stringify(data)) as {
+      phoneNumbers: object[]
+      emailAddresses: object[]
+    }
+    expect(serialized.phoneNumbers).toEqual([
+      { label: 'home', number: '555-0100' }
+    ])
+    expect(serialized.emailAddresses).toEqual([
+      { label: 'home', email: 'a@b.io' }
+    ])
+  })
+
+  it('drops phone/email entries that are empty after trimming', () => {
+    const data = normalizeContact({
+      givenName: 'Filter',
+      phoneNumbers: [
+        { label: 'home', number: '  ' },
+        { label: 'mobile', number: ' 555-0100 ' },
+        { label: 'work', number: null }
+      ],
+      emailAddresses: [
+        { label: 'work', email: '' },
+        { label: 'home', email: ' a@b.io ' }
+      ]
+    })
+    expect(data?.phoneNumbers).toEqual([
+      { label: 'mobile', number: '555-0100' }
+    ])
+    expect(data?.emailAddresses).toEqual([{ label: 'home', email: 'a@b.io' }])
+  })
+
+  it('does not let an empty phone/email entry keep a nameless contact', () => {
+    // The empty entries are dropped BEFORE the keep/drop check, so there is
+    // no contact method left and nothing worth importing.
+    expect(
+      normalizeContact({
+        phoneNumbers: [{ label: 'home', number: '   ' }],
+        emailAddresses: [{ label: 'work', email: '' }]
+      })
+    ).toBeNull()
+
+    // ... while a real entry still keeps it.
+    const kept = normalizeContact({
+      phoneNumbers: [
+        { label: 'home', number: '' },
+        { label: 'mobile', number: '555-0100' }
+      ]
+    })
+    expect(kept?.displayName).toBe('')
+    expect(kept?.phoneNumbers).toHaveLength(1)
   })
 
   it('includes isStarred only when exactly true', () => {
