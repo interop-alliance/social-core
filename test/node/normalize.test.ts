@@ -217,6 +217,20 @@ describe('normalizeContact', () => {
     ])
   })
 
+  it('unmangles http(s)://-prefixed did: URLs, leaving web urls alone', () => {
+    const data = normalizeContact({
+      givenName: 'Didi',
+      urlAddresses: [
+        { label: 'did', url: 'http://did:example:123' },
+        { label: 'work', url: 'https://x.example' }
+      ]
+    })
+    expect(data?.urlAddresses).toEqual([
+      { label: 'did', url: 'did:example:123' },
+      { label: 'work', url: 'https://x.example' }
+    ])
+  })
+
   it('omits imAddresses/urlAddresses when every entry is dropped', () => {
     const data = normalizeContact({
       givenName: 'AllDropped',

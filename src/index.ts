@@ -13,6 +13,7 @@ export {
   CONTACTS_COLLECTION_SPEC,
   CONTACTS_HISTORY_COLLECTION_SPEC
 } from './constants.js'
+export { getDids, unmangleDidUrl } from './dids.js'
 export { remotePayloadWins } from './lww.js'
 export { normalizeLabel, normalizeContact } from './normalize.js'
 export type { ContactInput } from './normalize.js'

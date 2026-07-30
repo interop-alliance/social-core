@@ -2,6 +2,7 @@
  * Copyright (c) 2026 Interop Alliance. All rights reserved.
  */
 import type { ContactData } from './types.js'
+import { unmangleDidUrl } from './dids.js'
 
 /**
  * An already-source-mapped partial contact: the raw fields a platform's contact
@@ -139,9 +140,14 @@ export function normalizeContact(input: ContactInput): ContactData | null {
     contact.imAddresses = imAddresses
   }
 
-  // A URL entry with no url (after trim) carries nothing: drop it.
+  // A URL entry with no url (after trim) carries nothing: drop it. Undo the
+  // `http(s)://` prefix some contacts apps prepend to an edited `did:` URI,
+  // so stored data is clean regardless of import source.
   const urlAddresses = (input.urlAddresses ?? [])
-    .map(u => ({ label: normalizeLabel(u.label), url: (u.url ?? '').trim() }))
+    .map(u => ({
+      label: normalizeLabel(u.label),
+      url: unmangleDidUrl((u.url ?? '').trim())
+    }))
     .filter(u => u.url !== '')
   if (urlAddresses.length > 0) {
     contact.urlAddresses = urlAddresses

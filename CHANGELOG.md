@@ -1,5 +1,14 @@
 # @interop/social-core Changelog
 
+## 0.2.0 - TBD
+
+### Added
+
+- `getDids` helper returning a contact's DIDs from `urlAddresses`, matching on
+  the `did:` scheme rather than the entry label (native address books do not
+  reliably round-trip custom labels), and `unmangleDidUrl` to tolerate the
+  `http(s)://` prefix some contacts apps prepend to edited URLs.
+
 ## 0.1.0-0.1.1 - TBD
 
 ### Added
