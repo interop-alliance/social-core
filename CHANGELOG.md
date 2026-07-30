@@ -1,6 +1,6 @@
 # @interop/social-core Changelog
 
-## 0.4.0 - TBD
+## 0.4.0 - 2026-07-30
 
 ### Changed
 
