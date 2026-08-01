@@ -1,5 +1,21 @@
 # @interop/social-core Changelog
 
+## 0.6.0 - TBD
+
+### Added
+
+- `setDids(contact, dids)`: the write-side counterpart of `getDids`. Replaces a
+  contact's `did:` entries (by the same scheme predicate, including mangled
+  `http(s)://did:` urls) with the given list, carrying non-DID `urlAddresses`
+  entries through untouched, labeling each DID entry `'did'`, trimming, dropping
+  blanks, and collapsing exact repeats to the first occurrence.
+
+### Changed
+
+- `getDids` now dedupes its result (exact comparison, first occurrence wins): a
+  merge from another replica can leave the same DID on two entries, and a
+  contact holding one DID twice means nothing beyond holding it once.
+
 ## 0.5.0 - 2026-07-30
 
 ### Changed

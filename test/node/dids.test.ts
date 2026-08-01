@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getDids, unmangleDidUrl } from '../../src/index.js'
+import { getDids, setDids, unmangleDidUrl } from '../../src/index.js'
 import type { ContactData } from '../../src/index.js'
 
 function contactWithUrls(
@@ -86,5 +86,71 @@ describe('getDids', () => {
     expect(
       getDids(contactWithUrls([{ label: 'work', url: 'https://example.com' }]))
     ).toEqual([])
+  })
+
+  it('collapses repeated DIDs to the first occurrence', () => {
+    const contact = contactWithUrls([
+      { label: 'did', url: 'did:example:123' },
+      { label: 'other', url: 'http://did:example:123' },
+      { label: 'did', url: 'did:example:456' }
+    ])
+    expect(getDids(contact)).toEqual(['did:example:123', 'did:example:456'])
+  })
+})
+
+describe('setDids', () => {
+  it('replaces the did: entries with the given list, labeled did', () => {
+    const contact = contactWithUrls([
+      { label: 'homepage', url: 'https://example.com/' },
+      { label: 'other', url: 'did:example:old' }
+    ])
+    expect(setDids(contact, ['did:example:new']).urlAddresses).toEqual([
+      { label: 'homepage', url: 'https://example.com/' },
+      { label: 'did', url: 'did:example:new' }
+    ])
+  })
+
+  it('trims entries and drops blank ones', () => {
+    const contact = contactWithUrls()
+    expect(
+      setDids(contact, [' did:example:123 ', '', '  ']).urlAddresses
+    ).toEqual([{ label: 'did', url: 'did:example:123' }])
+  })
+
+  it('dedupes exactly, first occurrence winning', () => {
+    const contact = contactWithUrls()
+    expect(
+      setDids(contact, [
+        'did:example:123',
+        'did:example:123',
+        'did:example:456'
+      ]).urlAddresses
+    ).toEqual([
+      { label: 'did', url: 'did:example:123' },
+      { label: 'did', url: 'did:example:456' }
+    ])
+  })
+
+  it('removes a mangled http:// DID entry when replacing', () => {
+    const contact = contactWithUrls([
+      { label: 'did', url: 'http://did:example:123' }
+    ])
+    expect(setDids(contact, []).urlAddresses).toBeUndefined()
+  })
+
+  it('omits urlAddresses entirely when nothing remains', () => {
+    const result = setDids(contactWithUrls(), [])
+    expect(result.urlAddresses).toBeUndefined()
+    expect(JSON.parse(JSON.stringify(result))).not.toHaveProperty(
+      'urlAddresses'
+    )
+  })
+
+  it('does not mutate the input contact', () => {
+    const contact = contactWithUrls([{ label: 'did', url: 'did:example:old' }])
+    setDids(contact, ['did:example:new'])
+    expect(contact.urlAddresses).toEqual([
+      { label: 'did', url: 'did:example:old' }
+    ])
   })
 })
