@@ -14,6 +14,23 @@ export function unmangleDidUrl(url: string): string {
 }
 
 /**
+ * Whether `url` names a DID: a `did:` URI, including a DID URL carrying a
+ * path/query/fragment, and including one an address book has mangled with an
+ * `http(s)://` prefix. Leading/trailing whitespace is tolerated.
+ *
+ * The one rule both sides of an edit share: the read side surfaces exactly the
+ * entries this accepts, and the write side must refuse a DID row it rejects --
+ * an entry that fails the predicate would be persisted and synced yet invisible
+ * on every screen, with no way to see or remove it again.
+ *
+ * The `did:` scheme is required lowercase by DID Core, so the check is
+ * case-sensitive.
+ */
+export function isDidUrl(url: string): boolean {
+  return unmangleDidUrl(url.trim()).startsWith('did:')
+}
+
+/**
  * The DIDs stored for a contact: every `urlAddresses` entry whose url is a
  * `did:` URI, including DID URLs carrying a path/query/fragment. Matches on
  * the scheme rather than the entry label, since native address books do not
@@ -30,8 +47,8 @@ export function getDids(contact: ContactData): string[] {
   return [
     ...new Set(
       (contact.urlAddresses ?? [])
-        .map(u => unmangleDidUrl(u.url.trim()))
-        .filter(url => url.startsWith('did:'))
+        .filter(entry => isDidUrl(entry.url))
+        .map(entry => unmangleDidUrl(entry.url.trim()))
     )
   ]
 }
@@ -47,9 +64,7 @@ export function getDids(contact: ContactData): string[] {
  */
 export function setDids(contact: ContactData, dids: string[]): ContactData {
   const urlAddresses = [
-    ...(contact.urlAddresses ?? []).filter(
-      entry => !unmangleDidUrl(entry.url.trim()).startsWith('did:')
-    ),
+    ...(contact.urlAddresses ?? []).filter(entry => !isDidUrl(entry.url)),
     ...[...new Set(dids.map(did => did.trim()).filter(Boolean))].map(did => ({
       label: 'did',
       url: did

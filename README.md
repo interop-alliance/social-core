@@ -124,15 +124,19 @@ const contact = upgradeContactData(headPayload.contact)
 
 ## Modules
 
-| Module      | Exports                                                                            | Purpose                                                                                                                      |
-| ----------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `types`     | `ContactData`, `ContactAction`, `ContactHeadPayload`, `ContactRevisionPayload`     | The shared contact shape and the decrypted sync-envelope payload shapes.                                                     |
-| `constants` | `CONTACTS_COLLECTION`, `CONTACTS_HISTORY_COLLECTION`, and their specs              | The wire-format collection ids and id-derivation both replicas agree on.                                                     |
-| `lww`       | `remotePayloadWins`                                                                | The last-write-wins tiebreak for a mutable head document.                                                                    |
-| `normalize` | `normalizeLabel`, `normalizeContact`, `ContactInput`                               | Pure normalization of a source-mapped partial contact into `ContactData`.                                                    |
-| `merge`     | `planImportMerge`                                                                  | The pure insert / overwrite / skip / stale planner for a re-runnable import, with a content fallback for churned source ids. |
-| `validate`  | `isContactData`, `isContactHeadPayload`, `isContactRevisionPayload`                | Runtime guards for a payload one replica decrypts from the other.                                                            |
-| `upgrade`   | `upgradeContactData`, `upgradeContactHeadPayload`, `upgradeContactRevisionPayload` | Read-path upgrade of a stored contact to the current shape.                                                                  |
+| Module         | Exports                                                                                                             | Purpose                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `types`        | `ContactData`, `ContactAction`, `ContactHeadPayload`, `ContactRevisionPayload`                                      | The shared contact shape and the decrypted sync-envelope payload shapes.                                                     |
+| `constants`    | `CONTACTS_COLLECTION`, `CONTACTS_HISTORY_COLLECTION`, and their specs                                               | The wire-format collection ids and id-derivation both replicas agree on.                                                     |
+| `lww`          | `remotePayloadWins`                                                                                                 | The last-write-wins tiebreak for a mutable head document.                                                                    |
+| `normalize`    | `normalizeLabel`, `normalizeContact`, `ContactInput`                                                                | Pure normalization of a source-mapped partial contact into `ContactData`.                                                    |
+| `merge`        | `planImportMerge`                                                                                                   | The pure insert / overwrite / skip / stale planner for a re-runnable import, with a content fallback for churned source ids. |
+| `validate`     | `isContactData`, `isContactHeadPayload`, `isContactRevisionPayload`                                                 | Runtime guards for a payload one replica decrypts from the other.                                                            |
+| `upgrade`      | `upgradeContactData`, `upgradeContactHeadPayload`, `upgradeContactRevisionPayload`                                  | Read-path upgrade of a stored contact to the current shape.                                                                  |
+| `dids`         | `getDids`, `setDids`, `isDidUrl`, `unmangleDidUrl`                                                                  | The DIDs a contact carries: one predicate shared by the read and write sides of an edit.                                     |
+| `seedContacts` | `selfContact`, `SELF_CONTACT_NAME`, `isUnlinkedSeedTwin`                                                            | The self-contact a new wallet seeds itself with, and the rule a pull absorbs another replica's copy of a seed by.            |
+| `display`      | `initialsFor`, `secondaryLineFor`, `contactMatchesQuery`, `compareContactsByName`, `ACTION_LABELS`, `snapshotLines` | The presentation rules both wallets render a contact, a contact list, and a revision with.                                   |
+| `buildContact` | `buildContact`, `ContactFormRow`                                                                                    | The headless half of an edit form: assembling form state plus the loaded contact into the `ContactData` to store.            |
 
 ## Contribute
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getDids, setDids, unmangleDidUrl } from '../../src/index.js'
+import { getDids, isDidUrl, setDids, unmangleDidUrl } from '../../src/index.js'
 import type { ContactData } from '../../src/index.js'
 
 function contactWithUrls(
@@ -32,6 +32,37 @@ describe('unmangleDidUrl', () => {
 
   it('leaves an ordinary web url unchanged', () => {
     expect(unmangleDidUrl('https://example.com/')).toBe('https://example.com/')
+  })
+})
+
+describe('isDidUrl', () => {
+  it('accepts a did: URI', () => {
+    expect(isDidUrl('did:example:123')).toBe(true)
+  })
+
+  it('accepts a DID URL with a path, query and fragment', () => {
+    expect(isDidUrl('did:example:123/path?q=1#frag')).toBe(true)
+  })
+
+  it('accepts a mangled http(s):// did: URI', () => {
+    expect(isDidUrl('https://did:example:123')).toBe(true)
+    expect(isDidUrl('HTTP://did:example:123')).toBe(true)
+  })
+
+  it('tolerates surrounding whitespace', () => {
+    expect(isDidUrl('  did:example:123  ')).toBe(true)
+  })
+
+  it('rejects an ordinary web url', () => {
+    expect(isDidUrl('https://example.com/')).toBe(false)
+  })
+
+  it('rejects an uppercase scheme (DID Core requires lowercase)', () => {
+    expect(isDidUrl('DID:example:123')).toBe(false)
+  })
+
+  it('rejects an empty string', () => {
+    expect(isDidUrl('')).toBe(false)
   })
 })
 

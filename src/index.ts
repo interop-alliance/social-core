@@ -13,7 +13,22 @@ export {
   CONTACTS_COLLECTION_SPEC,
   CONTACTS_HISTORY_COLLECTION_SPEC
 } from './constants.js'
-export { getDids, setDids, unmangleDidUrl } from './dids.js'
+export { getDids, isDidUrl, setDids, unmangleDidUrl } from './dids.js'
+export {
+  SELF_CONTACT_NAME,
+  isUnlinkedSeedTwin,
+  selfContact
+} from './seedContacts.js'
+export {
+  ACTION_LABELS,
+  compareContactsByName,
+  contactMatchesQuery,
+  initialsFor,
+  secondaryLineFor,
+  snapshotLines
+} from './display.js'
+export { buildContact } from './buildContact.js'
+export type { ContactFormRow } from './buildContact.js'
 export { remotePayloadWins } from './lww.js'
 export { normalizeLabel, normalizeContact } from './normalize.js'
 export type { ContactInput } from './normalize.js'

@@ -1,6 +1,37 @@
 # @interop/social-core Changelog
 
-## Unreleased - TBD
+## 0.7.0 - TBD
+
+### Added
+
+- The self-contact seed every wallet starts a new account with:
+  `selfContact({ dids, email })` and the display name it is stored under,
+  `SELF_CONTACT_NAME`. The name is convergence-critical -- a pull path
+  recognizes another replica's copy of a seed by its exact display name -- so
+  every wallet now spells it from one place. The seed is emitted through
+  `normalizeContact`, so it carries the same shape every other write path
+  produces. A wallet's own additional seeds stay app-side.
+- `isUnlinkedSeedTwin(local, incoming, seedNames)`: the pure predicate a pull
+  path absorbs another replica's copy of a seed with, instead of inserting a
+  duplicate. True when the incoming contact is named by `seedNames` (the
+  caller's own seed set), the local row carries the same name, and the local row
+  has not been customized (no phone, email, organization, or note). The caller
+  supplies only rows still unlinked to the remote feed, and keeps its own
+  storage transaction around it.
+- Contact display helpers, so a contact reads identically on both wallets:
+  `initialsFor` (initials avatar), `secondaryLineFor` (the line under a name),
+  `contactMatchesQuery` + `compareContactsByName` (contact-list search and
+  order), and `ACTION_LABELS` + `snapshotLines` (revision history).
+- `buildContact({ existing, displayName, givenName, familyName, organization, note, phoneNumbers, emailAddresses, dids })`:
+  the headless half of a contact edit form. Carries through every field the form
+  does not surface, trims and clears emptied fields to `undefined`, normalizes
+  entry labels, drops blank rows while preserving carried-through entry
+  metadata, and folds the DID rows back through `setDids`. The row shape is
+  exported as `ContactFormRow`.
+- `isDidUrl(url)`: the single "is this a DID?" predicate, now shared by the read
+  side (`getDids` / `setDids`, whose behavior is unchanged) and by an edit
+  form's write-side validation -- which must refuse exactly what the read side
+  would not surface, or persist an entry that is invisible on every screen.
 
 ### Fixed
 
