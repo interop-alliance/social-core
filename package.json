@@ -1,7 +1,7 @@
 {
   "name": "@interop/social-core",
   "description": "Platform-neutral contacts data model, normalization, import-merge, and last-write-wins rules shared by Freewallet mobile and web",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "type": "module",
   "scripts": {
     "build": "pnpm run clear && tsc",
