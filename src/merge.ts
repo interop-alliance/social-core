@@ -49,6 +49,48 @@ function didKeys(contact: ContactData): Set<string> {
   return new Set(getDids(contact))
 }
 
+/**
+ * A canonical JSON rendering of a contact's *content*, used as the exact-match
+ * key of the content fallback. Object keys are emitted in sorted order (so two
+ * structurally equal contacts assembled in different field orders render
+ * identically), `undefined`-valued keys are dropped (absent and explicitly
+ * `undefined` mean the same thing here), and array order is significant.
+ *
+ * The identity / attribution metadata expected to churn is excluded: the
+ * contact-level `nativeId` -- the very thing the fallback exists to rebind --
+ * and the per-entry `id` diff hints on `phoneNumbers` / `emailAddresses`, which
+ * Android can renumber when the OS re-aggregates raw contacts even though
+ * nothing the user typed changed. A missing `phoneNumbers` / `emailAddresses`
+ * renders like an empty one, since both fields are optional but
+ * `normalizeContact` always emits `[]`.
+ */
+function contentKey(contact: ContactData): string {
+  const canonical = (value: unknown, dropEntryId: boolean): unknown => {
+    if (Array.isArray(value)) {
+      return value.map(entry => canonical(entry, dropEntryId))
+    }
+    if (value === null || typeof value !== 'object') {
+      return value
+    }
+    const source = value as Record<string, unknown>
+    const result: Record<string, unknown> = {}
+    for (const key of Object.keys(source).sort()) {
+      if (source[key] === undefined || (dropEntryId && key === 'id')) {
+        continue
+      }
+      result[key] = canonical(source[key], false)
+    }
+    return result
+  }
+
+  const { nativeId: _nativeId, phoneNumbers, emailAddresses, ...rest } = contact
+  return JSON.stringify({
+    ...(canonical(rest, false) as Record<string, unknown>),
+    phoneNumbers: canonical(phoneNumbers ?? [], true),
+    emailAddresses: canonical(emailAddresses ?? [], true)
+  })
+}
+
 function sharesAny(a: Set<string>, b: Set<string>): boolean {
   for (const key of a) {
     if (b.has(key)) {
@@ -75,7 +117,14 @@ function sharesAny(a: Set<string>, b: Set<string>): boolean {
  *     OS re-links raw contacts) rebinds to its row instead of duplicating it.
  *     Only rows that have a `nativeId` no incoming contact in this batch claims
  *     are candidates, and each row can be claimed by at most one incoming
- *     contact (first match wins, in incoming order). A shared DID (from
+ *     contact (first match wins, in incoming order). Within one incoming
+ *     contact, candidates are tried in `existing` order and the first unclaimed
+ *     one wins, so an ambiguous match resolves deterministically. An exact
+ *     content match is tried first: equal on every field but the churn-prone id
+ *     metadata (the contact's own `nativeId` and the per-entry `id` hints on
+ *     phones / emails). It is the strongest signal, and the only rule that
+ *     reaches a contact the heuristics below cannot -- e.g. a nameless,
+ *     phone-number-only row. Next, a shared DID (from
  *     `urlAddresses`, via `getDids`) matches on its own, even when the display
  *     names differ -- a DID is a real identifier, unlike a name. Otherwise a
  *     candidate matches when the normalized display names are equal and
@@ -144,14 +193,23 @@ export function planImportMerge(
     }
   }
 
-  // Fallback candidates, indexed by DID and by normalized display name so the
-  // common path stays a couple of map lookups rather than a scan of `existing`.
+  // Fallback candidates, indexed by canonical content, by DID and by
+  // normalized display name so the common path stays a couple of map lookups
+  // rather than a scan of `existing`.
+  const byContent = new Map<string, Row[]>()
   const byDid = new Map<string, Row[]>()
   const byName = new Map<string, Row[]>()
   for (const record of existing) {
     const nativeId = record.contact.nativeId
     if (nativeId == null || incomingNativeIds.has(nativeId)) {
       continue
+    }
+    const content = contentKey(record.contact)
+    const contentBucket = byContent.get(content)
+    if (contentBucket === undefined) {
+      byContent.set(content, [record])
+    } else {
+      contentBucket.push(record)
     }
     for (const did of didKeys(record.contact)) {
       const bucket = byDid.get(did)
@@ -184,10 +242,21 @@ export function planImportMerge(
       contact.nativeId != null ? byNativeId.get(contact.nativeId) : undefined
 
     // No row under that nativeId: the source id may have churned, so look for
-    // the same contact by content among the rows nothing else claims. A shared
-    // DID is decisive on its own (a DID is a real identifier, and the display
-    // name may well have been re-edited on either side); otherwise fall back to
-    // matching by name.
+    // the same contact by content among the rows nothing else claims. An exact
+    // content match (everything but the churn-prone id metadata) is the
+    // strongest signal, so it is tried first -- it also covers the contacts the
+    // DID / name heuristics below cannot reach, such as a nameless
+    // phone-number-only row.
+    if (match === undefined && contact.nativeId != null) {
+      const candidates = byContent.get(contentKey(contact))
+      if (candidates !== undefined) {
+        match = candidates.find(c => !claimed.has(c._id))
+      }
+    }
+
+    // A shared DID is decisive on its own (a DID is a real identifier, and the
+    // display name may well have been re-edited on either side); otherwise fall
+    // back to matching by name.
     if (match === undefined && contact.nativeId != null) {
       const dids = didKeys(contact)
       for (const did of dids) {

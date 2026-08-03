@@ -148,6 +148,119 @@ describe('planImportMerge', () => {
     expect(plan.stale).toHaveLength(0)
   })
 
+  it('rebinds an unchanged nameless row whose nativeId churned', () => {
+    // Nothing but a phone number: no name and no DID, so only the exact
+    // content match can reach this row.
+    const nameless: ContactData = {
+      nativeId: 'android-aggregate-7',
+      displayName: '',
+      phoneNumbers: [{ label: 'mobile', number: '555-0100' }],
+      emailAddresses: []
+    }
+    const existing = existingRow({
+      _id: 'c1',
+      createdAt: '2026-07-01T00:00:00.000Z',
+      contact: nameless
+    })
+    const incoming = { ...nameless, nativeId: 'android-aggregate-42' }
+    const plan = planImportMerge([existing], [incoming])
+    expect(plan.overwrites).toEqual([{ _id: 'c1', contact: incoming }])
+    expect(plan.inserts).toHaveLength(0)
+    expect(plan.skips).toHaveLength(0)
+    expect(plan.stale).toHaveLength(0)
+  })
+
+  it('content-matches through churned per-entry phone / email ids', () => {
+    const existing = existingRow({
+      _id: 'c1',
+      createdAt: '2026-07-01T00:00:00.000Z',
+      contact: contact({
+        nativeId: 'android-aggregate-7',
+        displayName: '',
+        phoneNumbers: [{ label: 'mobile', number: '555-0100', id: 'raw-11' }],
+        emailAddresses: [
+          { label: 'home', email: 'ada@example.com', id: 'e-11' }
+        ]
+      })
+    })
+    // The OS re-aggregated: the contact id and both sub-record ids moved,
+    // while what the user typed is untouched.
+    const incoming = contact({
+      nativeId: 'android-aggregate-42',
+      displayName: '',
+      phoneNumbers: [{ label: 'mobile', number: '555-0100', id: 'raw-98' }],
+      emailAddresses: [{ label: 'home', email: 'ada@example.com', id: 'e-98' }]
+    })
+    const plan = planImportMerge([existing], [incoming])
+    expect(plan.overwrites).toEqual([{ _id: 'c1', contact: incoming }])
+    expect(plan.inserts).toHaveLength(0)
+    expect(plan.stale).toHaveLength(0)
+  })
+
+  it('exact content match ignores field order and undefined-valued fields', () => {
+    const existing = existingRow({
+      _id: 'c1',
+      createdAt: '2026-07-01T00:00:00.000Z',
+      contact: {
+        displayName: '',
+        emailAddresses: [],
+        phoneNumbers: [{ label: 'mobile', number: '555-0100' }],
+        nativeId: 'phone-old',
+        note: undefined
+      }
+    })
+    const incoming: ContactData = {
+      nativeId: 'phone-new',
+      displayName: '',
+      phoneNumbers: [{ label: 'mobile', number: '555-0100' }],
+      emailAddresses: []
+    }
+    const plan = planImportMerge([existing], [incoming])
+    expect(plan.overwrites).toEqual([{ _id: 'c1', contact: incoming }])
+    expect(plan.inserts).toHaveLength(0)
+    expect(plan.stale).toHaveLength(0)
+  })
+
+  it('inserts genuinely new content rather than content-matching it', () => {
+    const existing = existingRow({
+      _id: 'c1',
+      createdAt: '2026-07-01T00:00:00.000Z',
+      contact: contact({
+        nativeId: 'phone-old',
+        displayName: '',
+        phoneNumbers: [{ label: 'mobile', number: '555-0100' }]
+      })
+    })
+    const incoming = contact({
+      nativeId: 'phone-new',
+      displayName: '',
+      phoneNumbers: [{ label: 'mobile', number: '555-0199' }]
+    })
+    const plan = planImportMerge([existing], [incoming])
+    expect(plan.inserts).toEqual([incoming])
+    expect(plan.overwrites).toHaveLength(0)
+    expect(plan.skips).toHaveLength(0)
+    expect(plan.stale).toEqual([{ _id: 'c1', contact: existing.contact }])
+  })
+
+  it('resolves an ambiguous content match to the first row in `existing` order', () => {
+    const first = existingRow({
+      _id: 'first',
+      createdAt: '2026-07-01T00:00:00.000Z',
+      contact: contact({ nativeId: 'phone-old-a', displayName: '' })
+    })
+    const second = existingRow({
+      _id: 'second',
+      createdAt: '2026-07-01T00:00:00.000Z',
+      contact: contact({ nativeId: 'phone-old-b', displayName: '' })
+    })
+    const incoming = contact({ nativeId: 'phone-new', displayName: '' })
+    const plan = planImportMerge([first, second], [incoming])
+    expect(plan.overwrites).toEqual([{ _id: 'first', contact: incoming }])
+    expect(plan.inserts).toHaveLength(0)
+    expect(plan.stale).toEqual([{ _id: 'second', contact: second.contact }])
+  })
+
   it('skips (never duplicates) a wallet-edited row whose nativeId churned', () => {
     const existing = existingRow({
       _id: 'c1',

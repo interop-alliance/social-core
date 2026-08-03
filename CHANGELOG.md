@@ -1,5 +1,20 @@
 # @interop/social-core Changelog
 
+## Unreleased - TBD
+
+### Fixed
+
+- `planImportMerge` no longer duplicates a re-imported contact whose `nativeId`
+  churned but whose content is unchanged and which the existing content
+  heuristics could not reach -- notably a nameless, phone-number-only row (the
+  DID and name+phone/email rules both need something to key on). The content
+  fallback now tries an exact content match first: equal on every field but the
+  churn-prone id metadata (the contact's own `nativeId` and the per-entry `id`
+  hints on phones / emails, which Android renumbers when the OS re-aggregates
+  raw contacts). Candidates are still restricted to rows no incoming contact
+  claims by `nativeId`, and an ambiguous match resolves deterministically to the
+  first unclaimed row in `existing` order.
+
 ## 0.6.0 - 2026-08-01
 
 ### Added

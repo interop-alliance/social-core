@@ -105,9 +105,9 @@ const { inserts, overwrites, skips, stale } = planImportMerge(
 // Apply inserts/overwrites inside your own storage transaction; an overwrite
 // must keep the row's `updatedAt === createdAt` so it stays import-refreshable.
 // A contact whose source id churned (Android re-linking its aggregate ids, for
-// example) is matched by content -- a shared DID alone, or name plus a shared
-// phone or email -- so it
-// rebinds to its row instead of duplicating it. `stale` lists the imported rows
+// example) is matched by content -- identical content (ignoring the churn-prone
+// id metadata), a shared DID alone, or name plus a shared phone or email -- so
+// it rebinds to its row instead of duplicating it. `stale` lists the imported rows
 // this batch never matched; the planner never deletes, so it is yours to offer
 // as cleanup or ignore.
 ```
