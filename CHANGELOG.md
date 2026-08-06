@@ -1,5 +1,23 @@
 # @interop/social-core Changelog
 
+## 0.8.0 - TBD
+
+### Changed
+
+- **BREAKING**: the `deviceId` field on `ContactHeadPayload` and
+  `ContactRevisionPayload` (and their structural guards) is renamed to
+  `writerId`. It is an unkeyed, clearable attribution label for the writing
+  agent, not a hardware identity. No alias is kept.
+
+### Fixed
+
+- `remotePayloadWins` compares `updatedAt` by parsed epoch time instead of
+  lexically, so stamps written at different fractional-second precisions order
+  chronologically (`2026-08-03T12:00:00Z` compared lexically against
+  `2026-08-03T12:00:00.500Z` picked the earlier stamp). If either stamp is
+  unparseable the comparison falls back to the previous lexical compare; the
+  exact-tie `writerId` tiebreak is unchanged.
+
 ## 0.7.0 - 2026-08-03
 
 ### Added

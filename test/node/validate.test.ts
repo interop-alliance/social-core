@@ -24,7 +24,7 @@ const validContact: ContactData = {
 const validHead: ContactHeadPayload = {
   contactId: 'row-1',
   updatedAt: '2026-07-06T00:00:05.000Z',
-  deviceId: 'device-A',
+  writerId: 'writer-a',
   contact: validContact
 }
 
@@ -32,7 +32,7 @@ const validRevision: ContactRevisionPayload = {
   contactId: 'row-1',
   action: 'update',
   timestamp: '2026-07-06T00:00:05.000Z',
-  deviceId: 'device-A',
+  writerId: 'writer-a',
   snapshot: validContact
 }
 
@@ -242,8 +242,8 @@ describe('isContactHeadPayload', () => {
   })
 
   it('rejects a missing field', () => {
-    const { deviceId: _deviceId, ...rest } = validHead
-    void _deviceId
+    const { writerId: _writerId, ...rest } = validHead
+    void _writerId
     expect(isContactHeadPayload(rest)).toBe(false)
   })
 

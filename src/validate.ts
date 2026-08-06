@@ -135,7 +135,7 @@ export function isContactHeadPayload(x: unknown): x is ContactHeadPayload {
   return (
     typeof x.contactId === 'string' &&
     typeof x.updatedAt === 'string' &&
-    typeof x.deviceId === 'string' &&
+    typeof x.writerId === 'string' &&
     isContactData(x.contact)
   )
 }
@@ -156,7 +156,7 @@ export function isContactRevisionPayload(
     typeof x.action === 'string' &&
     (CONTACT_ACTIONS as readonly string[]).includes(x.action) &&
     typeof x.timestamp === 'string' &&
-    typeof x.deviceId === 'string' &&
+    typeof x.writerId === 'string' &&
     isContactData(x.snapshot)
   )
 }

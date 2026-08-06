@@ -79,7 +79,7 @@ export type ContactAction = 'create' | 'update' | 'delete' | 'restore'
 
 /**
  * The decrypted body of a `contacts` mutable head document (the payload sealed
- * inside its encrypted sync envelope). Carries `updatedAt` + `deviceId` -- never
+ * inside its encrypted sync envelope). Carries `updatedAt` + `writerId` -- never
  * on the wire in plaintext -- so last-write-wins can pick a deterministic
  * winner, and `contactId` (the originating row `_id`) so every replica's
  * projected row keeps a stable id that its revision history refers to.
@@ -87,19 +87,19 @@ export type ContactAction = 'create' | 'update' | 'delete' | 'restore'
 export type ContactHeadPayload = {
   contactId: string
   updatedAt: string
-  deviceId: string
+  writerId: string
   contact: ContactData
 }
 
 /**
  * The decrypted body of a `contacts-history` revision document (append-only,
  * content-addressed). The full post-edit snapshot keeps the write path dumb and
- * view/restore trivial; `deviceId` attributes the writer inside the envelope.
+ * view/restore trivial; `writerId` attributes the writer inside the envelope.
  */
 export type ContactRevisionPayload = {
   contactId: string
   action: ContactAction
   timestamp: string
-  deviceId: string
+  writerId: string
   snapshot: ContactData
 }

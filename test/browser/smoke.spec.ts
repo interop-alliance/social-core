@@ -6,8 +6,8 @@ test('contacts core works in the browser bundle', async ({ page }) => {
     const { remotePayloadWins, normalizeContact } =
       await import('/src/index.ts')
     const remoteWins = remotePayloadWins(
-      { updatedAt: '2026-07-06T00:00:05.000Z', deviceId: 'device-A' },
-      { updatedAt: '2026-07-06T00:00:00.000Z', deviceId: 'device-Z' }
+      { updatedAt: '2026-07-06T00:00:05.000Z', writerId: 'writer-a' },
+      { updatedAt: '2026-07-06T00:00:00.000Z', writerId: 'writer-z' }
     )
     const contact = normalizeContact({
       givenName: 'Ada',

@@ -100,13 +100,13 @@ describe('upgradeContactData', () => {
     const payload: ContactHeadPayload = {
       contactId: 'row-1',
       updatedAt: '2026-07-06T00:00:05.000Z',
-      deviceId: 'device-A',
+      writerId: 'writer-a',
       contact: legacyContact({ state: 'NY', postCode: '10001' })
     }
     const upgraded = upgradeContactHeadPayload(payload)
     expect(upgraded.contactId).toBe('row-1')
     expect(upgraded.updatedAt).toBe('2026-07-06T00:00:05.000Z')
-    expect(upgraded.deviceId).toBe('device-A')
+    expect(upgraded.writerId).toBe('writer-a')
     expect(upgraded.contact.postalAddresses?.[0]).toEqual({
       label: 'home',
       region: 'NY',
@@ -119,7 +119,7 @@ describe('upgradeContactData', () => {
       contactId: 'row-1',
       action: 'update',
       timestamp: '2026-07-06T00:00:05.000Z',
-      deviceId: 'device-A',
+      writerId: 'writer-a',
       snapshot: legacyContact({ pobox: 'PO Box 1' })
     }
     const upgraded = upgradeContactRevisionPayload(payload)
