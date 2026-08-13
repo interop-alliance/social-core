@@ -1,6 +1,6 @@
 # @interop/social-core Changelog
 
-## 0.8.1 - TBD
+## 0.8.1 - 2026-08-13
 
 ### Fixed
 
