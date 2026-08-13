@@ -13,6 +13,31 @@ describe('normalizeLabel', () => {
     expect(normalizeLabel(null)).toBe('other')
     expect(normalizeLabel(undefined)).toBe('other')
   })
+
+  it("strips Apple's wrapper from a predefined label", () => {
+    expect(normalizeLabel('_$!<Home>!$_')).toBe('home')
+    expect(normalizeLabel('_$!<Mobile>!$_')).toBe('mobile')
+    expect(normalizeLabel('_$!<HomePage>!$_')).toBe('homepage')
+    expect(normalizeLabel('  _$!<Work>!$_  ')).toBe('work')
+  })
+
+  it('falls back to "other" for a wrapper around blank text', () => {
+    expect(normalizeLabel('_$!< >!$_')).toBe('other')
+  })
+
+  it('leaves a user-typed label alone', () => {
+    expect(normalizeLabel('Beach House')).toBe('beach house')
+  })
+
+  it('leaves a near-miss wrapper intact', () => {
+    expect(normalizeLabel('_$!<Home>!$')).toBe('_$!<home>!$')
+    expect(normalizeLabel('$!<Home>!$_')).toBe('$!<home>!$_')
+    expect(normalizeLabel('prefix _$!<Home>!$_')).toBe('prefix _$!<home>!$_')
+  })
+
+  it('is idempotent (an unwrapped label unwraps to itself)', () => {
+    expect(normalizeLabel(normalizeLabel('_$!<Home>!$_'))).toBe('home')
+  })
 })
 
 describe('normalizeContact', () => {

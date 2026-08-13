@@ -80,17 +80,31 @@ export type ContactInput = {
 }
 
 /**
- * Apple's Contacts API wraps legacy/custom label names as `_$!<Name>!$_`
- * (e.g. `_$!<HomeFAX>!$_`) instead of handing back the plain name; unwrap it
- * before lowercasing so the raw wrapper never reaches a wallet's UI.
+ * Apple's Contacts API hands back its predefined label constants in a wrapped
+ * form: `CNLabelHome` arrives as `_$!<Home>!$_`, `CNLabelPhoneNumberMobile` as
+ * `_$!<Mobile>!$_`, `CNLabelURLAddressHomePage` as `_$!<HomePage>!$_`. A label
+ * the user typed themselves arrives plain, so only the predefined ones are
+ * wrapped. Strip the wrapper before lowercasing, so the raw form never reaches
+ * a wallet's UI or a synced payload.
+ *
+ * This strips the iOS wrapper, nothing more. A label is still whatever its
+ * source called it, so the same field can differ across platforms (iOS
+ * `homefax` against Android `faxhome`). Mapping the platforms onto one
+ * canonical vocabulary would be a separate change.
  */
 const APPLE_LABEL_WRAPPER = /^_\$!<(.+)>!\$_$/
 
-/** Lowercases and trims a native label, falling back to `other` when empty. */
+/**
+ * Lowercases and trims a native label, stripping the iOS wrapper described on
+ * {@link APPLE_LABEL_WRAPPER}, and falling back to `other` when empty.
+ */
 export function normalizeLabel(label: string | null | undefined): string {
   const trimmedLabel = (label ?? '').trim()
-  const appleMatch = trimmedLabel.match(APPLE_LABEL_WRAPPER)
-  const unwrapped = appleMatch ? appleMatch[1] ?? trimmedLabel : trimmedLabel
+  // Trim again after unwrapping: a wrapper around blank text (`_$!< >!$_`)
+  // carries no label, so it has to reach the `other` fallback below.
+  const unwrapped = (
+    trimmedLabel.match(APPLE_LABEL_WRAPPER)?.[1] ?? trimmedLabel
+  ).trim()
   const normalized = unwrapped.toLowerCase()
   return normalized.length > 0 ? normalized : 'other'
 }

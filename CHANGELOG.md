@@ -1,5 +1,25 @@
 # @interop/social-core Changelog
 
+## 0.8.1 - TBD
+
+### Fixed
+
+- `normalizeLabel` strips the wrapper Apple's Contacts API puts around its
+  predefined label constants, so `_$!<Home>!$_` normalizes to `home` instead of
+  reaching a wallet's UI verbatim. A wrapper around blank text falls back to
+  `other`. Labels the user typed themselves arrive unwrapped and are unaffected.
+  The wrapper is stripped, nothing more; labels are not mapped onto a canonical
+  cross-platform vocabulary.
+- `upgradeContactData` re-normalizes every stored entry label, so contacts
+  written before this fix are repaired when they are loaded. The import path
+  alone could not reach them: a row edited in the wallet is never overwritten by
+  a re-import, and a wallet that only receives contacts over sync never imports
+  at all.
+
+Contacts imported on iOS before this release get new labels, so their payloads
+change on the first write after it. Expect one round of sync traffic for those
+rows.
+
 ## 0.8.0 - 2026-08-05
 
 ### Changed

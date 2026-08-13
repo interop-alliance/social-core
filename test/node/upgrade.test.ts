@@ -96,6 +96,55 @@ describe('upgradeContactData', () => {
     expect(upgradeContactData(contact)).toBe(contact)
   })
 
+  it("strips Apple's label wrapper from stored entries", () => {
+    const stored: ContactData = {
+      nativeId: 'phone-1',
+      displayName: 'Ada Lovelace',
+      phoneNumbers: [{ label: '_$!<Mobile>!$_', number: '555-0100' }],
+      emailAddresses: [{ label: '_$!<Work>!$_', email: 'ada@example.com' }],
+      postalAddresses: [{ label: '_$!<Home>!$_', city: 'London' }],
+      urlAddresses: [{ label: '_$!<HomePage>!$_', url: 'https://example.com' }]
+    }
+    const upgraded = upgradeContactData(stored)
+    expect(upgraded.phoneNumbers?.[0]?.label).toBe('mobile')
+    expect(upgraded.emailAddresses?.[0]?.label).toBe('work')
+    expect(upgraded.postalAddresses?.[0]?.label).toBe('home')
+    expect(upgraded.urlAddresses?.[0]?.label).toBe('homepage')
+    // The repair is a relabel only: every other field survives.
+    expect(upgraded.phoneNumbers?.[0]?.number).toBe('555-0100')
+    expect(upgraded.urlAddresses?.[0]?.url).toBe('https://example.com')
+    expect(upgraded.nativeId).toBe('phone-1')
+    expect(JSON.stringify(upgradeContactData(upgraded))).toBe(
+      JSON.stringify(upgraded)
+    )
+  })
+
+  it('repairs a wrapped label without postal addresses present', () => {
+    const stored: ContactData = {
+      displayName: 'Solo',
+      phoneNumbers: [{ label: '_$!<Home>!$_', number: '555-0199' }],
+      emailAddresses: []
+    }
+    const upgraded = upgradeContactData(stored)
+    expect(upgraded).not.toBe(stored)
+    expect(upgraded.phoneNumbers?.[0]?.label).toBe('home')
+    // An absent optional array stays absent rather than becoming `undefined`.
+    expect(Object.keys(upgraded)).not.toContain('urlAddresses')
+    expect(Object.keys(upgraded)).not.toContain('postalAddresses')
+  })
+
+  it('leaves already-normalized labels untouched, by reference', () => {
+    const contact: ContactData = {
+      displayName: 'Ada Lovelace',
+      phoneNumbers: [{ label: 'mobile', number: '555-0100' }],
+      emailAddresses: [{ label: 'work', email: 'ada@example.com' }],
+      urlAddresses: [{ label: 'did', url: 'did:example:123' }]
+    }
+    const upgraded = upgradeContactData(contact)
+    expect(upgraded).toBe(contact)
+    expect(upgraded.phoneNumbers).toBe(contact.phoneNumbers)
+  })
+
   it('upgrades the contact inside a head payload, leaving the rest alone', () => {
     const payload: ContactHeadPayload = {
       contactId: 'row-1',
