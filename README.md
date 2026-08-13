@@ -119,7 +119,9 @@ import { upgradeContactData } from '@interop/social-core'
 
 const contact = upgradeContactData(headPayload.contact)
 // Idempotent: a contact already in the current shape is returned unchanged,
-// so it is safe to apply on every load.
+// so it is safe to apply on every load. As well as the postal-address
+// spellings, this re-normalizes every entry label, which repairs a row stored
+// before iOS's `_$!<Home>!$_` label wrapper was stripped.
 ```
 
 ## Modules
