@@ -79,9 +79,19 @@ export type ContactInput = {
   note?: string | null
 }
 
+/**
+ * Apple's Contacts API wraps legacy/custom label names as `_$!<Name>!$_`
+ * (e.g. `_$!<HomeFAX>!$_`) instead of handing back the plain name; unwrap it
+ * before lowercasing so the raw wrapper never reaches a wallet's UI.
+ */
+const APPLE_LABEL_WRAPPER = /^_\$!<(.+)>!\$_$/
+
 /** Lowercases and trims a native label, falling back to `other` when empty. */
 export function normalizeLabel(label: string | null | undefined): string {
-  const normalized = (label ?? '').trim().toLowerCase()
+  const trimmedLabel = (label ?? '').trim()
+  const appleMatch = trimmedLabel.match(APPLE_LABEL_WRAPPER)
+  const unwrapped = appleMatch ? appleMatch[1] ?? trimmedLabel : trimmedLabel
+  const normalized = unwrapped.toLowerCase()
   return normalized.length > 0 ? normalized : 'other'
 }
 
