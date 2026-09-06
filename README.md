@@ -4,7 +4,8 @@
 [![NPM Version](https://img.shields.io/npm/v/@interop/social-core.svg)](https://npm.im/@interop/social-core)
 
 > Platform-neutral contacts data model, normalization, import-merge, and
-> last-write-wins rules shared by Freewallet mobile and web.
+> last-write-wins rules shared by Freewallet mobile and web,
+> `@interop/was-react`, and `@interop/was-sync`.
 
 ## Table of Contents
 

@@ -82,6 +82,31 @@ describe('remotePayloadWins', () => {
     ).toBe(true)
   })
 
+  it('falls back to lexical, not "parseable side wins", when only the local stamp is unparseable', () => {
+    // Every wallet's stored contact data already converges under the plain
+    // lexical fallback; a "the parseable side wins" carve-out is not this
+    // package's rule and must not come back by copy-paste from a consumer.
+    // '2' < 'p' lexically, so the parseable remote stamp loses here, which is
+    // the opposite of "parseable side wins".
+    expect(
+      remotePayloadWins(
+        { updatedAt: '2026-01-01T00:00:00Z', writerId: 'writer-a' },
+        { updatedAt: 'pending', writerId: 'writer-z' }
+      )
+    ).toBe(false)
+  })
+
+  it('falls back to lexical, not "parseable side wins", when only the remote stamp is unparseable', () => {
+    // 'p' > '2' lexically, so the unparseable remote stamp wins here, which is
+    // the opposite of "parseable side wins".
+    expect(
+      remotePayloadWins(
+        { updatedAt: 'pending', writerId: 'writer-a' },
+        { updatedAt: '2026-01-01T00:00:00Z', writerId: 'writer-z' }
+      )
+    ).toBe(true)
+  })
+
   it('on an exact updatedAt tie the lexically greater writerId wins', () => {
     const at = '2026-07-06T00:00:05.000Z'
     // remote writerId 'writer-b' > local 'writer-a' so remote wins.

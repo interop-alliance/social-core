@@ -1,5 +1,19 @@
 # @interop/social-core Changelog
 
+## 0.8.2 - TBD
+
+### Added
+
+- A regression test for `remotePayloadWins` covering the mixed case, where
+  exactly one side's `updatedAt` parses as a date and the other does not,
+  confirming the lexical fallback decides in both directions rather than the
+  parseable side winning.
+
+### Changed
+
+- README and AGENTS.md now note `@interop/was-react` and `@interop/was-sync` as
+  consumers of `remotePayloadWins`, alongside the Freewallet wallets.
+
 ## 0.8.1 - 2026-08-13
 
 ### Fixed
